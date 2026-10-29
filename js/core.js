@@ -329,7 +329,7 @@ export function shell({ profile, items, subtitle }) {
         h('button', { class: 'icon-btn', 'aria-label': 'Change password', title: 'Change password', onclick: () => passwordDialog(profile) }, icon('key')),
         h('button', { class: 'icon-btn', 'aria-label': 'Sign out', title: 'Sign out', onclick: signOut }, icon('out')))));
   const titleEl = h('h1', {});
-  const actionsEl = h('div', { class: 'row', style: 'gap:.5rem' });
+  const actionsEl = h('div', { class: 'row topbar-actions', style: 'gap:.5rem' });
   const crumbEl = h('div', { class: 'row', style: 'gap:.5rem;min-width:0' });
   const menuBtn = h('button', { class: 'icon-btn menu-btn', 'aria-label': 'Open menu', onclick: () => side.classList.toggle('open') }, icon('menu'));
   const content = h('div', { class: 'content', id: 'content' });
@@ -339,7 +339,7 @@ export function shell({ profile, items, subtitle }) {
     content,
     set(title, { active, actions = [], back } = {}) {
       crumbEl.innerHTML = '';
-      if (back) crumbEl.append(h('a', { class: 'crumb', href: back.href }, back.label), h('span', { class: 'muted' }, '/'));
+      if (back) crumbEl.append(h('a', { class: 'crumb', href: back.href, 'aria-label': 'Back to ' + back.label }, h('span', { class: 'crumb-arrow' }, '‹ '), h('span', { class: 'crumb-label' }, back.label)), h('span', { class: 'muted crumb-sep' }, '/'));
       titleEl.textContent = title; crumbEl.append(titleEl); document.title = `${title} — Stratabench`;
       actionsEl.innerHTML = ''; actionsEl.append(...actions);
       Object.entries(navEls).forEach(([id, a]) => { if (id === active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -348,7 +348,7 @@ export function shell({ profile, items, subtitle }) {
     count(id, n) { const c = side.querySelector(`[data-count="${id}"]`); if (c) { c.textContent = n; c.classList.toggle('hidden', !n); } },
   };
 }
-export const btn = (label, onclick, kind = '', ic) => h('button', { class: `btn ${kind}`, onclick }, ic ? icon(ic) : null, label);
+export const btn = (label, onclick, kind = '', ic) => h('button', { class: `btn ${kind}`, onclick, ...(ic && typeof label === 'string' ? { 'aria-label': label, title: label } : {}) }, ic ? icon(ic) : null, ic && typeof label === 'string' ? h('span', { class: 'btn-label' }, label) : label);
 export const loading = () => h('div', { class: 'grid', style: 'gap:.6rem' }, h('div', { class: 'skeleton', style: 'width:30%' }), h('div', { class: 'skeleton' }), h('div', { class: 'skeleton', style: 'width:80%' }));
 export const emptyState = (title, text, action) => h('div', { class: 'empty' }, h('b', {}, title), h('span', { class: 'small' }, text), action ? h('div', { style: 'margin-top:1rem' }, action) : null);
 export function table(cols, rows, { onRow, empty } = {}) {
@@ -356,9 +356,21 @@ export function table(cols, rows, { onRow, empty } = {}) {
   return h('div', { class: 'table-wrap' }, h('table', { class: 't' },
     h('thead', {}, h('tr', {}, cols.map((c) => h('th', { class: c.cls || '' }, c.label)))),
     h('tbody', {}, rows.map((r) => {
-      const tr = h('tr', { class: onRow ? 'click' : '' }, cols.map((c) => { const v = c.render ? c.render(r) : r[c.key]; return h('td', { class: c.cls || '' }, v ?? '—'); }));
+      const tr = h('tr', { class: onRow ? 'click' : '' }, cols.map((c) => { const v = c.render ? c.render(r) : r[c.key]; return h('td', { class: c.cls || '', 'data-label': typeof c.label === 'string' ? c.label : '' }, v ?? '—'); }));
       if (onRow) tr.addEventListener('click', (e) => { if (!e.target.closest('button,a,input,select,label')) onRow(r); });
       return tr;
     }))));
 }
 export function statusBadge(map, val, tone = {}) { return h('span', { class: 'badge ' + (tone[val] || '') }, map[val] || val); }
+
+/* Label table cells from their column headers so tables can stack as cards on phones. */
+(function labelTables() {
+  if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+  const run = () => document.querySelectorAll('table.t').forEach((t) => {
+    const heads = [...t.querySelectorAll(':scope > thead th')].map((th) => th.textContent.trim());
+    if (!heads.length) return;
+    t.querySelectorAll(':scope > tbody > tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (!td.hasAttribute('data-label')) td.setAttribute('data-label', heads[i] || ''); }));
+  });
+  let q = false;
+  new MutationObserver(() => { if (!q) { q = true; requestAnimationFrame(() => { q = false; run(); }); } }).observe(document.documentElement, { childList: true, subtree: true });
+})();

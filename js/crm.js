@@ -308,7 +308,7 @@ views.company = async (params, id) => {
       return item;
     })()) : emptyState('No activity yet', 'Log the first call or note above. Drop files onto any entry to attach them.'));
     const open = deals.filter((d) => !['lost', 'delivered'].includes(d.stage));
-    c.append(h('div', { class: 'grid', style: 'grid-template-columns:minmax(0,2fr) minmax(16rem,1fr);gap:1rem' },
+    c.append(h('div', { class: 'grid co-split', style: 'gap:1rem' },
       h('section', { class: 'card' }, h('h2', {}, 'Activity'),
         (composer.append(logBox, pendingEl, h('div', { class: 'row' }, kindSel, due, picker, btn('Attach', () => picker.click(), 'quiet sm', 'clip'), h('div', { class: 'grow' }), btn('Log', async (e) => {
           const text = logBox.value.trim() || (pending.length ? `Attached ${pending.length} file${pending.length > 1 ? 's' : ''}` : '');

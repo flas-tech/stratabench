@@ -30,7 +30,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tnum { font-variant-numeric: tabular-nums; }
 
 /* shell */
-.shell { display: grid; grid-template-columns: 15rem 1fr; min-height: 100vh; }
+.shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); min-height: 100vh; }
 .side { background: var(--surface); border-right: 1px solid var(--border); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .side .brand { display: flex; gap: var(--space-3); align-items: center; text-decoration: none; color: var(--text); padding: var(--space-2) var(--space-2) var(--space-5); }
 .brand img { width: 2rem; height: 2rem; object-fit: contain; }
@@ -53,7 +53,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .menu-btn { display: none; }
 .content { padding: var(--space-6) var(--space-8) var(--space-12); max-width: 90rem; }
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
   .side { position: fixed; inset: 0 auto 0 0; width: 16rem; z-index: 30; transform: translateX(-100%); transition: transform .2s; }
   .side.open { transform: none; box-shadow: 0 0 0 100vmax rgba(0,0,0,.45); }
   .menu-btn { display: inline-flex; }
@@ -317,7 +317,7 @@ fieldset.bare > .card + .card { margin-top: 0; }
 .qgrid { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--space-4); align-items: start; }
 .qmain { gap: var(--space-4); }
 .qsum { position: sticky; top: 5rem; }
-@media (max-width: 1100px) { .qgrid { grid-template-columns: 1fr; } .qsum { position: static; order: -1; } }
+@media (max-width: 1100px) { .qgrid { grid-template-columns: minmax(0, 1fr); } .qsum { position: static; order: -1; } }
 .qsum-total { font-size: 2rem; font-weight: 800; letter-spacing: -.01em; margin: .15rem 0 .75rem; }
 .qsum-margin { display: grid; gap: .35rem; padding: .75rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .mbar { position: relative; height: .5rem; border-radius: 99px; background: var(--border); overflow: visible; }
@@ -407,4 +407,64 @@ table.rate-card td.rc-role .input { width: 100%; }
   table.rate-card td.rc-active { grid-column: span 3; align-self: end; display: flex; align-items: center; padding-bottom: .35rem; }
   table.rate-card td.actions { grid-column: span 1; justify-self: end; align-self: end; }
   .table-wrap:has(> table.rate-card) { overflow: visible; border: 0; }
+}
+
+/* ---------- phones: tables become stacked cards ---------- */
+.thread-list .row { flex-wrap: nowrap; }
+.thread-list .grow { min-width: 0; }
+.thread-list .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) {
+  .table-wrap:has(> table.t:not(.rate-card)) { overflow: visible; border: 0; background: none; box-shadow: none; padding: 0; }
+  .table-wrap > table.t:not(.rate-card) { display: block; width: 100%; min-width: 0; }
+  .table-wrap > table.t:not(.rate-card) thead { display: none; }
+  .table-wrap > table.t:not(.rate-card) tbody { display: grid; gap: .6rem; }
+  .table-wrap > table.t:not(.rate-card) tr { display: grid; gap: .35rem; padding: .8rem .9rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .table-wrap > table.t:not(.rate-card) td { display: grid; grid-template-columns: 6.75rem minmax(0, 1fr); gap: .75rem; align-items: baseline; padding: 0; border: 0; min-width: 0; max-width: none; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+  .table-wrap > table.t:not(.rate-card) td::before { content: attr(data-label); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .table-wrap > table.t:not(.rate-card) td[data-label=""], .table-wrap > table.t:not(.rate-card) td:first-child { grid-template-columns: minmax(0, 1fr); }
+  .table-wrap > table.t:not(.rate-card) td[data-label=""]::before, .table-wrap > table.t:not(.rate-card) td:first-child::before { content: none; display: none; }
+  .table-wrap > table.t:not(.rate-card) td:first-child { font-weight: 600; font-size: 1rem; padding-bottom: .15rem; }
+  .table-wrap > table.t:not(.rate-card) td > * { justify-self: start; }
+  .table-wrap > table.t:not(.rate-card) td, .t tr.click:hover td { background: none !important; }
+  .table-wrap > table.t:not(.rate-card) td.actions { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+  .table-wrap > table.t:not(.rate-card) td.actions > * { display: inline-flex; }
+}
+.co-split { grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); }
+@media (max-width: 860px) { .co-split { grid-template-columns: minmax(0, 1fr); } }
+.content { min-width: 0; }
+.subtabs { max-width: 100%; min-width: 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.subtabs::-webkit-scrollbar { display: none; }
+.thread-list .list > a.row { min-width: 0; padding-left: 0; padding-right: 0; }
+@media (max-width: 640px) {
+  .topbar { gap: var(--space-2); }
+  .topbar h1, .topbar .crumb, .topbar nav { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .btn { padding-left: .7rem; padding-right: .7rem; white-space: nowrap; }
+}
+.grid > *, .co-split > * { min-width: 0; }
+.dl dd, .card a, .card p { overflow-wrap: anywhere; }
+.grid { grid-template-columns: minmax(0, 1fr); }
+.grid.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid.co-split { grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); }
+@media (max-width: 860px) { .grid.co-split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) { .grid.g2, .grid.g3, .grid.g4 { grid-template-columns: minmax(0, 1fr); } }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list > * { min-width: 0; }
+.crumb-arrow { display: none; }
+@media (max-width: 640px) {
+  .topbar .crumb-label, .topbar .crumb-sep { display: none; }
+  .topbar .crumb-arrow { display: inline; font-size: 1.4rem; line-height: 1; color: var(--muted); }
+  .topbar .crumb { text-decoration: none; flex: none; overflow: visible; }
+  .topbar h1 { font-size: 1.05rem; }
+}
+@media (max-width: 640px) {
+  .topbar-actions:has(> .btn ~ .btn) > .btn:has(svg) .btn-label { display: none; }
+  .topbar-actions:has(> .btn ~ .btn) > .btn:has(svg) { padding-left: .6rem; padding-right: .6rem; }
+  .topbar-actions { flex: none; }
+}
+@media (max-width: 640px) {
+  .table-wrap > table.t:not(.rate-card) td:not(:first-child):not([data-label=""]) > * { grid-column: 2; }
+}
+@media (max-width: 640px) {
+  .table-wrap > table.t:not(.rate-card) td[data-label=""]:not(:first-child) { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; padding-top: .35rem; border-top: 1px solid var(--border); margin-top: .2rem; }
+  .table-wrap > table.t:not(.rate-card) td[data-label=""]:not(:first-child):empty { display: none; }
 }
