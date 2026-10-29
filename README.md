@@ -10,3 +10,5 @@ Static site served by GitHub Pages at https://stratabench.com, backed by Supabas
 - Large uploads use resumable TUS uploads directly to Supabase Storage.
 
 Accounts are created by staff only; there is no public sign-up.
+
+Deploys automatically via GitHub Actions; open pages and the Home Screen app update themselves.
