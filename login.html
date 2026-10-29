@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="preconnect" href="https://api.fontshare.com" />
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/app.css" />
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<title>Sign in — Stratabench</title>
+</head>
+<body>
+<main class="auth">
+  <section class="auth-art">
+    <img class="bg" src="img/hero.webp" alt="" />
+    <a class="brand" href="index.html"><img src="img/mark.png" alt="" width="40" height="40" /><span><strong>Stratabench</strong><em>Aerospace test systems</em></span></a>
+    <div>
+      <h2>Project portal and engineering workspace.</h2>
+      <p>Customers: drawings, CAD models, reports, calibration certificates and test data for your projects. Team: CRM, pipeline, and document control.</p>
+    </div>
+  </section>
+  <section class="auth-form">
+    <form id="login" novalidate>
+      <div>
+        <h1>Sign in</h1>
+        <p class="muted small" style="margin:.35rem 0 0">One login for customers and employees. You'll go to the right place automatically.</p>
+      </div>
+      <label class="f">Email<input class="input" id="email" type="email" autocomplete="username" required /></label>
+      <label class="f">Password<input class="input" id="password" type="password" autocomplete="current-password" required /></label>
+      <p class="err-text" id="err" role="alert"></p>
+      <button class="btn" type="submit" id="go">Sign in</button>
+      <p class="muted xs">Forgot your password? Ask your Stratabench engineer for a reset. New to Stratabench? <a href="index.html#contact">Send your test requirement</a> and we'll set up your portal. Accounts are created by our team; there is no public sign-up.</p>
+      <p class="xs"><a href="index.html">← Back to stratabench</a></p>
+    </form>
+  </section>
+</main>
+<script type="module">
+import { sb, currentProfile } from './js/core.js';
+const err = document.getElementById('err');
+if (new URLSearchParams(location.search).has('disabled')) err.textContent = 'This account is disabled. Contact Stratabench for access.';
+const route = (p) => location.replace(p.role === 'customer' ? 'portal.html' : 'crm.html');
+const existing = await currentProfile();
+if (existing && !existing.disabled) route(existing);
+document.getElementById('login').addEventListener('submit', async (e) => {
+  e.preventDefault(); err.textContent = '';
+  const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value;
+  if (!email || !password) { err.textContent = 'Enter your email and password.'; return; }
+  const btn = document.getElementById('go'); btn.disabled = true; btn.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { err.textContent = /invalid/i.test(error.message) ? 'That email and password combination is not recognized.' : /banned/i.test(error.message) ? 'This account is disabled. Contact Stratabench for access.' : error.message; btn.disabled = false; btn.textContent = 'Sign in'; return; }
+  const p = await currentProfile();
+  if (!p || p.disabled) { await sb.auth.signOut(); err.textContent = 'This account is not active.'; btn.disabled = false; btn.textContent = 'Sign in'; return; }
+  route(p);
+});
+</script>
+</body>
+</html>
