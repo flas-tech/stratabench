@@ -434,3 +434,7 @@ a { color: inherit; }
 @media (max-width: 1320px) { .nav a[href="#who"], .nav a[href="#equipment"] { display: none; } }
 @media (max-width: 1140px) { .nav a.nav-login { display: inline; } }
 @media (max-width: 520px) { .nav .nav-cta { display: none; } .nav a.nav-login { border: 1px solid var(--color-border); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-xs); } }
+.brand { min-width: 0; }
+@media (min-width: 1000px) { .brand { flex-shrink: 0; padding-right: var(--space-6); } }
+@media (max-width: 1480px) { .nav a[href="#who"], .nav a[href="#equipment"] { display: none; } }
+@media (max-width: 480px) { .site-header .brand-text em, header .brand-text em { display: none; } }
