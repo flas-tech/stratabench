@@ -1,0 +1,16 @@
+{
+  "name": "Stratabench",
+  "short_name": "Stratabench",
+  "description": "Stratabench project portal and engineering workspace",
+  "id": "/login.html",
+  "start_url": "/login.html?source=homescreen",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080d14",
+  "theme_color": "#080d14",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

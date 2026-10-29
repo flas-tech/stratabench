@@ -438,3 +438,4 @@ a { color: inherit; }
 @media (min-width: 1000px) { .brand { flex-shrink: 0; padding-right: var(--space-6); } }
 @media (max-width: 1480px) { .nav a[href="#who"], .nav a[href="#equipment"] { display: none; } }
 @media (max-width: 480px) { .site-header .brand-text em, header .brand-text em { display: none; } }
+.site-head { padding-top: env(safe-area-inset-top); }

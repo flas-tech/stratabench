@@ -237,3 +237,19 @@ table.t { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .composer .row { flex-wrap: wrap; }
 .composer select.input { max-width: 100%; }
 .up-list .mono { overflow: hidden; text-overflow: ellipsis; }
+/* ---- installed (Home Screen) app: respect notch and home indicator ---- */
+.side { padding-top: max(var(--space-4), env(safe-area-inset-top)); padding-bottom: max(var(--space-4), env(safe-area-inset-bottom)); padding-left: max(var(--space-4), env(safe-area-inset-left)); }
+.topbar { padding-top: max(var(--space-3), env(safe-area-inset-top)); }
+.viewer-head { padding-top: max(var(--space-3), env(safe-area-inset-top)); }
+.toast-wrap { bottom: max(var(--space-4), env(safe-area-inset-bottom)); }
+@media (min-width: 901px) { .topbar { padding-top: var(--space-4); } }
+@media (display-mode: standalone) { body { overscroll-behavior-y: none; } }
+.auth-art { padding-top: max(var(--space-10), env(safe-area-inset-top)); }
+@media (max-width: 900px) { .auth-art { padding-top: max(var(--space-6), env(safe-area-inset-top)); } }
+.install-tip { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(1rem, calc(env(safe-area-inset-bottom) + .5rem)); z-index: 70; width: min(26rem, calc(100% - 1.5rem)); display: flex; gap: .75rem; align-items: center; background: var(--surface-3); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: .75rem .9rem; box-shadow: 0 12px 32px rgba(0,0,0,.3); font-size: var(--text-sm); }
+.install-tip img { border-radius: 9px; flex: none; }
+.install-tip div { display: grid; gap: .15rem; flex: 1; min-width: 0; }
+.install-tip span { color: var(--muted); }
+.install-tip svg { vertical-align: -2px; }
+.install-tip button { background: none; border: 0; color: var(--muted); cursor: pointer; font: inherit; padding: .25rem; }
+.install-tip button.go { background: var(--accent); color: var(--on-accent); border-radius: var(--radius-sm); padding: .35rem .7rem; font-weight: 600; }
