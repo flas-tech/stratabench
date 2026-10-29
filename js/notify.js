@@ -15,7 +15,7 @@ export const canInstallPrompt = () => !!installEvt;
 export async function promptInstall() { if (!installEvt) return false; installEvt.prompt(); const r = await installEvt.userChoice; installEvt = null; return r.outcome === 'accepted'; }
 
 const b64 = (s) => { const p = '='.repeat((4 - (s.length % 4)) % 4); const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
-const reg = () => navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready);
+const reg = () => navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(() => navigator.serviceWorker.ready);
 
 export async function currentSub() { if (!env.pushable) return null; const r = await reg(); return r.pushManager.getSubscription(); }
 

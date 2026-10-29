@@ -1,14 +1,22 @@
 // Stratabench service worker: Home Screen install, push notifications, offline notice.
 // Network-first for pages; never caches API calls, files, or anything cross-origin.
-const CACHE = 'sb-shell-v2';
+// __BUILD__ is replaced on every deploy, so the browser sees a new worker each release.
+const BUILD = '__BUILD__';
+const CACHE = 'sb-shell-' + BUILD;
 const SHELL = ['/offline.html', '/css/app.css', '/img/icon-192.png', '/favicon.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
+// Always revalidate our own code and pages with the server (cheap 304s when unchanged),
+// so an update reaches every open tab and installed app without waiting out HTTP caches.
+const FRESH = /\.(?:html|js|mjs|css|json|webmanifest)$/;
 self.addEventListener('fetch', (e) => {
   const r = e.request;
-  if (r.method !== 'GET' || new URL(r.url).origin !== location.origin) return;
-  if (r.mode === 'navigate') e.respondWith(fetch(r).catch(() => caches.match('/offline.html')));
+  const url = new URL(r.url);
+  if (r.method !== 'GET' || url.origin !== location.origin) return;
+  if (r.mode === 'navigate') { e.respondWith(fetch(r, { cache: 'no-cache' }).catch(() => caches.match('/offline.html'))); return; }
+  if (FRESH.test(url.pathname)) e.respondWith(fetch(r, { cache: 'no-cache' }).catch(() => caches.match(r)));
 });
+self.addEventListener('message', (e) => { if (e.data === 'skip-waiting') self.skipWaiting(); });
 
 self.addEventListener('push', (e) => {
   let d = {};

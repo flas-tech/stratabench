@@ -274,3 +274,31 @@ hr.sep { border: 0; border-top: 1px solid var(--border); margin: .25rem 0; width
 .app-get b.t { display: block; font-size: var(--text-base); margin-bottom: .15rem; }
 .app-get p { margin: 0 0 .35rem; color: var(--muted); }
 .auth-form .app-get { width: min(24rem, 100%); box-sizing: border-box; }
+
+/* ---------- entry attachments ---------- */
+.ef { display: grid; gap: var(--space-2); border-top: 1px solid var(--border); padding-top: var(--space-4); }
+.ef > .row svg { width: 1rem; height: 1rem; color: var(--muted); }
+.ef-drop { display: flex; align-items: center; justify-content: center; gap: .5rem; padding: var(--space-4); font-size: var(--text-sm); }
+.ef-drop svg { width: 1.1rem; height: 1.1rem; flex: none; }
+.ef-list { display: grid; gap: 2px; }
+.ef-row { display: flex; align-items: center; gap: .6rem; padding: .45rem .5rem; border-radius: var(--radius-sm); }
+.ef-row:hover { background: var(--accent-soft); }
+.ef-row .btn.sm { padding: .3rem .45rem; }
+.badge svg, .chip-file svg { width: .8rem; height: .8rem; }
+.chip-file { display: inline-flex; align-items: center; gap: .3rem; max-width: 16rem; padding: .2rem .5rem; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--text); font: inherit; font-size: var(--text-xs); cursor: pointer; }
+.chip-file:hover { border-color: var(--accent); color: var(--accent); }
+.file-over { outline: 2px dashed var(--accent); outline-offset: 3px; background: var(--accent-soft); border-radius: var(--radius-sm); }
+.deal.file-over { outline-offset: 0; }
+/* ---------- monitor ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--space-3); }
+.stat { display: grid; gap: .2rem; padding: var(--space-4) var(--space-5); }
+.stat .xs { font-family: var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.stat b { font-size: 1.5rem; }
+.list.audit > .row + .row { border-top: 1px solid var(--border); }
+@media (max-width: 640px) { .list.audit > .row { flex-wrap: wrap; } .list.audit .mono { min-width: 0 !important; } }
+.ef > .row { flex-wrap: wrap; row-gap: .25rem; }
+.ef > .row .switch { white-space: normal; }
+.modal-body > .grid > *, .ef > * { min-width: 0; }
+.modal-foot { flex-wrap: wrap; }
+.stats > .card + .card { margin-top: 0; }
+.ef-list > * { min-width: 0; }

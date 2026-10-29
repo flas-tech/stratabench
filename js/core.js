@@ -47,6 +47,8 @@ export const icons = {
   eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
   cube: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  clip: '<path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   menu: '<path d="M3 12h18M3 6h18M3 18h18"/>',
   bell: '<path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9"/><path d="M10 19a2 2 0 0 0 4 0"/>',
@@ -225,6 +227,10 @@ export function newPath(prefix, name) { return `${prefix}/${crypto.randomUUID()}
 
 /** Upload with resumable (TUS) protocol for anything over 6 MB. onProgress(0..1) */
 export async function uploadFile(file, path, onProgress = () => {}) {
+  window.sbBusy = (window.sbBusy || 0) + 1;
+  try { return await uploadFileInner(file, path, onProgress); } finally { window.sbBusy--; }
+}
+async function uploadFileInner(file, path, onProgress) {
   if (file.size <= SMALL) {
     onProgress(0.05);
     const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
@@ -258,7 +264,9 @@ export async function signedUrl(path, downloadName) {
   const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 2, downloadName ? { download: downloadName } : undefined);
   if (error) throw error; return data.signedUrl;
 }
+const logDoc = (action, d) => { sb.rpc('log_event', { p_action: action, p_entity: 'documents', p_entity_id: d.id || null, p_company_id: d.company_id || null, p_label: d.name || null, p_details: d.size_bytes ? { size_bytes: d.size_bytes } : null }).then(() => {}, () => {}); };
 export async function downloadDoc(doc) {
+  logDoc('download', doc);
   try { const url = await signedUrl(doc.storage_path, doc.name); const a = h('a', { href: url, download: doc.name }); document.body.append(a); a.click(); a.remove(); }
   catch (e) { toast('Download failed: ' + e.message, true); }
 }
@@ -287,6 +295,7 @@ export function progressRow(file) {
 
 /* ---------- viewer ---------- */
 export async function openDoc(doc) {
+  if (fileKind(doc.name) !== 'other') logDoc('view', doc);
   const kind = fileKind(doc.name);
   if (kind === 'other') {
     const native = NATIVE_CAD.includes(ext(doc.name));

@@ -1,0 +1,35 @@
+name: Deploy site
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stamp build version
+        run: |
+          BUILD="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          echo "Build $BUILD"
+          mkdir -p _site
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'README.md' ./ _site/
+          # every page, the service worker and the update checker learn this build id
+          find _site -name '*.html' -o -name 'sw.js' -o -name 'update.js' | xargs sed -i "s/__BUILD__/$BUILD/g"
+          printf '{"build":"%s","sha":"%s","built_at":"%s"}\n' "$BUILD" "$GITHUB_SHA" "$(date -u +%FT%TZ)" > _site/version.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

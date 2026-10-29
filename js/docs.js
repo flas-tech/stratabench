@@ -42,7 +42,7 @@ export function docLibrary({ docs, projects = [], companies = null, staff = fals
         } }, icon('trash')) : null);
       tbody.append(h('tr', {},
         h('td', { style: 'width:3.2rem' }, fileBadge(d.name)),
-        h('td', {}, h('div', { class: 'name', title: d.name }, d.name), d.description ? h('div', { class: 'muted xs ellipsis', style: 'max-width:28rem' }, d.description) : null),
+        h('td', {}, h('div', { class: 'name', title: d.name }, d.name, ...[[d.deal_id, 'Opportunity'], [d.inquiry_id, 'Inquiry'], [d.activity_id, 'Note / task']].filter(([x]) => x).map(([, l]) => h('span', { class: 'badge', style: 'margin-left:.4rem;font-size:.65rem;vertical-align:middle' }, l))), d.description ? h('div', { class: 'muted xs ellipsis', style: 'max-width:28rem' }, d.description) : null),
         companies ? h('td', { class: 'small' }, compName[d.company_id] || h('span', { class: 'muted' }, 'Internal')) : null,
         h('td', { class: 'small' }, CATEGORIES[d.category] || d.category),
         projects.length ? h('td', { class: 'small muted' }, projName[d.project_id] || '—') : null,
