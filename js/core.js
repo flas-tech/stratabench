@@ -49,6 +49,8 @@ export const icons = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   menu: '<path d="M3 12h18M3 6h18M3 18h18"/>',
+  bell: '<path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9"/><path d="M10 19a2 2 0 0 0 4 0"/>',
+  iosshare: '<path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
   sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/>',
   out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
   key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
@@ -186,7 +188,7 @@ export async function requireRole(roles) {
   if (!roles.includes(p.role)) { location.replace(p.role === 'customer' ? 'portal.html' : 'crm.html'); throw new Error('redirect'); }
   return p;
 }
-export async function signOut() { await sb.auth.signOut(); location.replace('login.html'); }
+export async function signOut() { try { const n = await import('./notify.js'); await n.forgetDevice(); } catch {} await sb.auth.signOut(); location.replace('login.html'); }
 
 export function passwordDialog(profile, forced = false) {
   const p1 = h('input', { class: 'input', type: 'password', autocomplete: 'new-password', minlength: 10 });
@@ -314,6 +316,7 @@ export function shell({ profile, items, subtitle }) {
     h('div', { class: 'me' }, h('b', {}, profile.full_name || profile.email), h('span', { class: 'muted xs' }, profile.email),
       h('div', { class: 'row', style: 'margin-top:.6rem;gap:.35rem' },
         h('button', { class: 'icon-btn', 'aria-label': 'Toggle color theme', title: 'Theme', onclick: toggleTheme }, icon('sun')),
+        h('button', { class: 'icon-btn', 'aria-label': 'Notifications and app', title: 'Notifications', onclick: () => import('./notify.js').then((n) => n.settingsDialog(profile)) }, icon('bell')),
         h('button', { class: 'icon-btn', 'aria-label': 'Change password', title: 'Change password', onclick: () => passwordDialog(profile) }, icon('key')),
         h('button', { class: 'icon-btn', 'aria-label': 'Sign out', title: 'Sign out', onclick: signOut }, icon('out')))));
   const titleEl = h('h1', {});

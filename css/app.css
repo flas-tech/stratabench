@@ -253,3 +253,24 @@ table.t { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .install-tip svg { vertical-align: -2px; }
 .install-tip button { background: none; border: 0; color: var(--muted); cursor: pointer; font: inherit; padding: .25rem; }
 .install-tip button.go { background: var(--accent); color: var(--on-accent); border-radius: var(--radius-sm); padding: .35rem .7rem; font-weight: 600; }
+/* ---- app setup prompt (install + notifications) ---- */
+.onboard { position: fixed; z-index: 70; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, calc(env(safe-area-inset-bottom) + .5rem)); width: min(25rem, calc(100% - 1.5rem)); display: flex; gap: .8rem; align-items: flex-start; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-lg); padding: .9rem .9rem 1rem; box-shadow: 0 16px 40px rgba(0,0,0,.32); font-size: var(--text-sm); animation: ob-in .25s ease-out; }
+@media (max-width: 600px) { .onboard { left: 50%; right: auto; transform: translateX(-50%); } }
+@keyframes ob-in { from { opacity: 0; translate: 0 12px; } }
+@media (prefers-reduced-motion: reduce) { .onboard { animation: none; } }
+.onboard img { border-radius: 10px; flex: none; border: 1px solid var(--border); }
+.onboard-body { flex: 1; min-width: 0; }
+.onboard-body > b { display: block; font-size: var(--text-base); margin-bottom: .2rem; }
+.onboard-body p { margin: 0 0 .4rem; color: var(--muted); }
+.onboard .icon-btn { flex: none; margin: -.3rem -.3rem 0 0; }
+.steps-mini { margin: .35rem 0 0; padding-left: 1.2rem; display: grid; gap: .3rem; color: var(--text); }
+.steps-mini li::marker { color: var(--accent); font-weight: 700; }
+.ico-inline { display: inline-flex; vertical-align: -3px; color: var(--accent); }
+.ico-inline svg { width: 16px; height: 16px; }
+hr.sep { border: 0; border-top: 1px solid var(--border); margin: .25rem 0; width: 100%; }
+/* login page app panel */
+.app-get { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; background: var(--surface-2); display: flex; gap: .85rem; align-items: flex-start; font-size: var(--text-sm); }
+.app-get img { border-radius: 10px; flex: none; border: 1px solid var(--border); }
+.app-get b.t { display: block; font-size: var(--text-base); margin-bottom: .15rem; }
+.app-get p { margin: 0 0 .35rem; color: var(--muted); }
+.auth-form .app-get { width: min(24rem, 100%); box-sizing: border-box; }

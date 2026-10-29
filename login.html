@@ -44,12 +44,30 @@
       <p class="muted xs">Forgot your password? Ask your Stratabench engineer for a reset. New to Stratabench? <a href="index.html#contact">Send your test requirement</a> and we'll set up your portal. Accounts are created by our team; there is no public sign-up.</p>
       <p class="xs"><a href="index.html">← Back to stratabench</a></p>
     </form>
+    <div id="app-get" class="app-get" hidden></div>
   </section>
 </main>
 <script type="module">
 import { sb, currentProfile } from './js/core.js';
 const err = document.getElementById('err');
 if (new URLSearchParams(location.search).has('disabled')) err.textContent = 'This account is disabled. Contact Stratabench for access.';
+// Home Screen + notifications prompt
+import('./js/notify.js').then(({ env, iosSteps, canInstallPrompt, promptInstall }) => {
+  const box = document.getElementById('app-get');
+  const draw = () => {
+    if (env.standalone) { box.hidden = true; return; }
+    const why = 'Add Stratabench to your Home Screen, then allow notifications after you sign in, so you hear about new messages and inquiries right away.';
+    box.innerHTML = '';
+    const img = Object.assign(document.createElement('img'), { src: '/img/icon-192.png', alt: '', width: 44, height: 44 });
+    const body = document.createElement('div');
+    body.innerHTML = '<b class="t">Get the Stratabench app</b><p></p>'; body.querySelector('p').textContent = why;
+    if (env.ios) body.append(iosSteps());
+    else if (canInstallPrompt()) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary sm'; b.textContent = 'Install app'; b.onclick = async () => { if (await promptInstall()) box.hidden = true; }; body.append(b); }
+    else { const p = document.createElement('p'); p.className = 'xs'; p.textContent = env.android ? 'In Chrome, open the ⋮ menu and tap Add to Home screen.' : 'In Chrome or Edge, click the install icon in the address bar. In Safari on Mac, choose File → Add to Dock.'; body.append(p); }
+    box.append(img, body); box.hidden = false;
+  };
+  draw(); document.addEventListener('sb-installable', draw);
+}).catch(() => {});
 const route = (p) => location.replace(p.role === 'customer' ? 'portal.html' : 'crm.html');
 const existing = await currentProfile();
 if (existing && !existing.disabled) route(existing);

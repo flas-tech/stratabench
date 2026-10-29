@@ -455,3 +455,4 @@ async function route() {
 }
 window.addEventListener('hashchange', route);
 route(); refreshCounts();
+import('./notify.js').then((n) => n.boot(me)).catch(() => {});

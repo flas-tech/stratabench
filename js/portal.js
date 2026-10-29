@@ -94,3 +94,4 @@ await load();
 window.addEventListener('hashchange', route);
 await route();
 setInterval(() => { if (!location.hash.includes('messages')) refreshUnread(); }, 60000);
+import('./notify.js').then((n) => n.boot(profile)).catch(() => {});
