@@ -166,12 +166,12 @@ export function registerQuotes(views, ctx) {
     const tbody = h('tbody');
     const draw = () => {
       tbody.replaceChildren(...list.map((r, i) => {
-        const mEl = h('td', { class: 'mono small' });
+        const mEl = h('td', { class: 'mono small rc-margin', 'data-label': 'Margin' });
         const upd = () => { mEl.textContent = r.bill_rate && r.cost_rate !== null && r.cost_rate !== '' ? pct((r.bill_rate - r.cost_rate) / r.bill_rate) : '—'; };
         const inp = (k, type = 'number') => { const el = h('input', { class: 'input', type, step: '0.01', min: 0, value: r[k] ?? '', 'aria-label': k.replace('_', ' '), style: type === 'number' ? 'max-width:8rem' : '' }); el.addEventListener('input', () => { r[k] = el.value === '' ? null : type === 'number' ? Number(el.value) : el.value; upd(); }); return el; };
         upd();
-        return h('tr', {}, h('td', {}, inp('role', 'text')), h('td', {}, inp('cost_rate')), h('td', {}, inp('bill_rate')), mEl,
-          h('td', {}, h('label', { class: 'switch xs' }, h('input', { type: 'checkbox', checked: r.active, onchange: (e) => { r.active = e.target.checked; } }), 'Active')),
+        return h('tr', {}, h('td', { class: 'rc-role', 'data-label': 'Role' }, inp('role', 'text')), h('td', { 'data-label': 'Cost / hr' }, inp('cost_rate')), h('td', { 'data-label': 'Bill / hr' }, inp('bill_rate')), mEl,
+          h('td', { class: 'rc-active' }, h('label', { class: 'switch xs' }, h('input', { type: 'checkbox', checked: r.active, onchange: (e) => { r.active = e.target.checked; } }), 'Active')),
           h('td', { class: 'actions' }, h('button', { class: 'btn quiet sm', type: 'button', 'aria-label': `Remove ${r.role}`, onclick: () => { if (r.id) removed.push(r.id); list.splice(i, 1); draw(); } }, icon('trash'))));
       }));
     };
@@ -188,7 +188,7 @@ export function registerQuotes(views, ctx) {
     const fs = h('fieldset', { disabled: ro, class: 'bare' },
       h('section', { class: 'card' }, h('h2', {}, 'Labor rate card'),
         h('p', { class: 'muted small', style: 'margin-top:0' }, 'Cost rate is your loaded internal cost per hour (wages, burden, overhead). Bill rate is what the customer pays per hour. Margin is calculated from both. Customers never see these.'),
-        h('div', { class: 'table-wrap' }, h('table', { class: 't' }, h('thead', {}, h('tr', {}, h('th', {}, 'Role'), h('th', {}, 'Cost / hr'), h('th', {}, 'Bill / hr'), h('th', {}, 'Margin'), h('th', {}, ''), h('th', {}, ''))), tbody)),
+        h('div', { class: 'table-wrap' }, h('table', { class: 't rate-card' }, h('thead', {}, h('tr', {}, h('th', {}, 'Role'), h('th', {}, 'Cost / hr'), h('th', {}, 'Bill / hr'), h('th', {}, 'Margin'), h('th', {}, ''), h('th', {}, ''))), tbody)),
         ro ? null : h('div', { style: 'margin-top:.75rem' }, btn('Add role', () => { list.push({ role: '', cost_rate: null, bill_rate: null, active: true, sort: (list.length + 1) * 10 }); draw(); }, 'quiet sm', 'plus'))),
       h('section', { class: 'card' }, h('h2', {}, 'Pricing defaults'),
         h('div', { class: 'form-grid' }, num(s, 'target_margin', 'Target gross margin'), num(s, 'min_margin', 'Minimum margin (warning below)'), num(s, 'contingency_pct', 'Default contingency'), num(s, 'validity_days', 'Quote valid for', 'days'),

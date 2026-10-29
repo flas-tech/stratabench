@@ -390,3 +390,21 @@ table.mini th { color: var(--muted); font-weight: 500; }
 .qd-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 .qd-foot { margin-top: 1.5rem; padding-top: .6rem; border-top: 1px solid var(--line); font-size: 8pt; color: var(--sub); }
 @media (max-width: 640px) { .qd-parties, .qd-cols { grid-template-columns: 1fr; } .qd-id { text-align: left; } .qd-id dl { justify-content: start; } }
+
+/* rate card: roomy role column on desktop, stacked cards on phones */
+table.rate-card td.rc-role { min-width: 16rem; }
+table.rate-card td.rc-role .input { width: 100%; }
+@media (max-width: 760px) {
+  table.rate-card thead { display: none; }
+  table.rate-card, table.rate-card tbody { display: block; width: 100%; }
+  table.rate-card tr { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .5rem .75rem; padding: .85rem; border-bottom: 1px solid var(--border); }
+  table.rate-card td { display: grid; gap: .2rem; padding: 0; border: 0; min-width: 0; }
+  table.rate-card td[data-label]::before { content: attr(data-label); font-family: var(--font-mono); font-size: .65rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  table.rate-card td.rc-role { grid-column: 1 / -1; min-width: 0; }
+  table.rate-card td .input { max-width: none !important; width: 100%; }
+  table.rate-card td[data-label='Cost / hr'], table.rate-card td[data-label='Bill / hr'] { grid-column: span 3; }
+  table.rate-card td.rc-margin { grid-column: span 2; align-self: center; }
+  table.rate-card td.rc-active { grid-column: span 3; align-self: end; display: flex; align-items: center; padding-bottom: .35rem; }
+  table.rate-card td.actions { grid-column: span 1; justify-self: end; align-self: end; }
+  .table-wrap:has(> table.rate-card) { overflow: visible; border: 0; }
+}
