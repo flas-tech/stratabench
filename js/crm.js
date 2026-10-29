@@ -2,11 +2,13 @@ import { sb, h, icon, requireRole, shell, passwordDialog, fmtDate, fmtDateTime, 
 import { docLibrary, uploadDialog } from './docs.js';
 import { threadView, unreadSummary } from './thread.js';
 import { SUPABASE_URL } from './config.js';
+import { registerQuotes } from './quotes.js';
 import { entryFiles, filesDialog, attachmentCounts, clipBadge, fileDropTarget, attachFiles } from './attach.js';
 
 const me = await requireRole(['employee', 'admin']);
 const isAdmin = me.role === 'admin';
 const isSuper = isAdmin && !!me.is_superadmin;
+const canQuote = isAdmin || !!me.can_quote;
 const ui = shell({ profile: me, subtitle: 'Workspace', items: [
   { id: 'dashboard', label: 'Dashboard', icon: 'dash' },
   { id: 'inbox', label: 'Inbox', icon: 'inbox', count: true },
@@ -14,6 +16,7 @@ const ui = shell({ profile: me, subtitle: 'Workspace', items: [
   { id: 'companies', label: 'Companies', icon: 'building' },
   { id: 'pipeline', label: 'Pipeline', icon: 'pipeline' },
   { id: 'projects', label: 'Projects', icon: 'wrench' },
+  ...(canQuote ? [{ id: 'quotes', label: 'Quotes', icon: 'file' }] : []),
   { id: 'documents', label: 'Documents', icon: 'folder' },
   { id: 'tasks', label: 'Tasks', icon: 'check', count: true },
   { id: 'team', label: isAdmin ? 'Users & access' : 'Customer logins', icon: 'users' },
@@ -118,6 +121,7 @@ function newLoginDialog({ companies, companyId = '', role = 'customer', contact,
 
 /* ---------- views ---------- */
 const views = {};
+let Q = null; // quote builder, registered below once helpers exist
 
 views.dashboard = async () => {
   ui.set('Dashboard', { active: 'dashboard' });
@@ -272,7 +276,7 @@ views.company = async (params, id) => {
     btn('Edit', () => editDialog({ title: 'Edit company', specs: companySpecs, values: company, onSave: async (v) => { await q(sb.from('companies').update(v).eq('id', id)); reload(); }, onDelete: async () => { await q(sb.from('companies').delete().eq('id', id)); location.hash = '#/companies'; } }), 'ghost'),
     btn('Upload', () => uploadDialog({ companyId: id, projects, staff: true, onDone: () => { location.hash = `#/company/${id}?tab=documents`; reload(); } }), '', 'upload'),
   ] });
-  const T = [['overview', 'Overview'], ['contacts', `Contacts (${contacts.length})`], ['deals', `Opportunities (${deals.length})`], ['projects', `Projects (${projects.length})`], ['documents', `Documents (${docs.length})`], ['messages', `Messages (${msgs.length})`], ['portal', `Portal logins (${users.length})`]];
+  const T = [['overview', 'Overview'], ['contacts', `Contacts (${contacts.length})`], ['deals', `Opportunities (${deals.length})`], ['projects', `Projects (${projects.length})`], ['documents', `Documents (${docs.length})`], ['messages', `Messages (${msgs.length})`], ['portal', `Portal logins (${users.length})`], ...(canQuote ? [['quotes', 'Quotes']] : [])];
   ui.content.append(h('div', { class: 'subtabs', role: 'tablist' }, T.map(([k, l]) => h('button', { role: 'tab', 'aria-selected': String(k === tab), onclick: () => { location.hash = `#/company/${id}?tab=${k}`; } }, l))));
   const c = ui.content;
   const addContact = () => editDialog({ title: 'Add contact', specs: contactSpecs, onSave: async (v) => { await q(sb.from('contacts').insert({ ...v, company_id: id })); reload(); } });
@@ -348,6 +352,7 @@ views.company = async (params, id) => {
     c.append(await threadView({ companyId: id, projects, me, staff: true, staffIds: new Set(st.map((s) => s.id)), onChange: () => { reload(); } }));
     refreshCounts();
   }
+  if (tab === 'quotes' && Q) c.append(await Q.companyQuotesTab(id));
   if (tab === 'portal') {
     c.append(h('div', { class: 'toolbar' }, h('span', { class: 'muted small' }, 'People here can sign in and see only this company\'s visible projects, shared documents and messages.'), h('div', { class: 'grow' }), btn('Create portal login', () => newLoginDialog({ companies: [company], companyId: id, onDone: reload }), '', 'key')),
       userTable(users, [company], reload, emptyState('No portal logins', 'Create one so this customer can see shared files and project status.', btn('Create portal login', () => newLoginDialog({ companies: [company], companyId: id, onDone: reload })))));
@@ -365,7 +370,7 @@ function dealTable(deals, st, companies, reload, empty) {
   ], deals, { onRow: (d) => editDeal(d, st, companies, reload), empty });
 }
 function editDeal(d, st, companies, reload) {
-  editDialog({ title: 'Opportunity', specs: dealSpecs(companies, st), values: d, extra: entryFiles({ link: { deal_id: d.id }, companyId: d.company_id, label: 'this opportunity' }), onSave: async (v) => { await q(sb.from('deals').update({ ...v, updated_at: new Date().toISOString() }).eq('id', d.id)); reload(); }, onDelete: async () => { await q(sb.from('deals').delete().eq('id', d.id)); reload(); } });
+  editDialog({ title: 'Opportunity', specs: dealSpecs(companies, st), values: d, extra: h('div', { class: 'grid', style: 'gap:1.25rem' }, Q ? Q.dealQuotes(d) : null, entryFiles({ link: { deal_id: d.id }, companyId: d.company_id, label: 'this opportunity' })), onSave: async (v) => { await q(sb.from('deals').update({ ...v, updated_at: new Date().toISOString() }).eq('id', d.id)); reload(); }, onDelete: async () => { await q(sb.from('deals').delete().eq('id', d.id)); reload(); } });
 }
 function projectTable(projects, companies, reload, empty) {
   const cname = (id) => companies?.find((c) => c.id === id)?.name;
@@ -381,7 +386,7 @@ function userTable(users, companies, reload, empty) {
   const cname = (id) => companies.find((c) => c.id === id)?.name || '—';
   return table([
     { label: 'Name', render: (u) => h('div', {}, h('b', {}, u.full_name || '—'), h('div', { class: 'xs muted' }, u.email)) },
-    { label: 'Access', render: (u) => u.is_superadmin ? h('span', { class: 'badge accent' }, 'super admin') : h('span', { class: 'badge ' + (u.role === 'admin' ? 'accent' : u.role === 'employee' ? 'ok' : '') }, u.role) },
+    { label: 'Access', render: (u) => h('span', { class: 'row', style: 'gap:.3rem;flex-wrap:nowrap' }, u.is_superadmin ? h('span', { class: 'badge accent' }, 'super admin') : h('span', { class: 'badge ' + (u.role === 'admin' ? 'accent' : u.role === 'employee' ? 'ok' : '') }, u.role), u.role === 'employee' && u.can_quote ? h('span', { class: 'badge' }, 'quotes') : null) },
     { label: 'Company', render: (u) => h('span', { class: 'small' }, u.role === 'customer' ? cname(u.company_id) : 'Stratabench') },
     { label: 'Status', render: (u) => u.disabled ? h('span', { class: 'badge bad' }, 'Disabled') : u.must_change_password ? h('span', { class: 'badge warn' }, 'Temp password') : h('span', { class: 'badge ok' }, 'Active') },
     { label: '', cls: 'actions', render: (u) => (u.id === me.id || (!isAdmin && u.role !== 'customer') || (u.is_superadmin && !isSuper)) ? null : h('span', {},
@@ -391,9 +396,11 @@ function userTable(users, companies, reload, empty) {
     if (u.id === me.id) return;
     if (u.is_superadmin && !isSuper) { toast('Only a super admin can change this account.', true); return; }
     editDialog({ title: 'Edit login', specs: [{ name: 'full_name', label: 'Name' }, { name: 'title', label: 'Title' }, { name: 'email', label: 'Email (sign-in)', type: 'email', full: true }, { name: 'role', label: 'Access', type: 'select', options: { customer: 'Customer', employee: 'Employee', admin: 'Admin' } }, { name: 'company_id', label: 'Customer company', type: 'select', options: Object.fromEntries([['', '— none —'], ...companies.map((c) => [c.id, c.name])]) },
+      { name: 'can_quote', label: 'Can build quotes (sees costs, rates and margins). Admins always can.', type: 'checkbox', full: true },
       ...(isSuper ? [{ name: 'is_superadmin', label: 'Super admin (sees the Monitor activity log; other admins cannot change this account)', type: 'checkbox', full: true }] : [])], values: u,
       onSave: async (v) => { const payload = { action: 'update', user_id: u.id, full_name: v.full_name, title: v.title, role: v.role, company_id: v.company_id };
-        if (isSuper && !!v.is_superadmin !== !!u.is_superadmin) payload.is_superadmin = !!v.is_superadmin; if (v.email && v.email !== u.email) payload.email = v.email; await adminUsers(payload); staffCache = null; toast('Saved.'); reload(); } });
+        if (isSuper && !!v.is_superadmin !== !!u.is_superadmin) payload.is_superadmin = !!v.is_superadmin;
+        if (!!v.can_quote !== !!u.can_quote) payload.can_quote = !!v.can_quote; if (v.email && v.email !== u.email) payload.email = v.email; await adminUsers(payload); staffCache = null; toast('Saved.'); reload(); } });
   } : null, empty });
 }
 
@@ -471,6 +478,7 @@ views.team = async () => {
     h('div', { class: 'card', style: 'margin-bottom:1rem' }, h('h2', {}, 'How access works'), h('ul', { class: 'small muted', style: 'margin:0;padding-left:1.1rem;display:grid;gap:.25rem' },
       h('li', {}, 'Customers see only their own company\'s visible projects, shared documents and non-internal messages. The database enforces this, not just the screen.'),
       h('li', {}, 'Employees use the CRM and can create customer logins. Admins can also create employees and admins.'),
+      h('li', {}, 'Quotes, labor rates and margins are visible only to admins and employees with “Can build quotes” turned on. Open a login to change it.'),
       isSuper ? h('li', {}, 'Super admins can see the Monitor log of every sign-in, file view, download and change. Other admins cannot change or reset a super admin account.') : null,
       h('li', {}, 'New logins get a one-time temporary password and must set their own at first sign-in. There is no public sign-up.'))),
     h('h2', { class: 'small mono muted', style: 'letter-spacing:.08em;text-transform:uppercase;margin:1.25rem 0 .6rem' }, 'Stratabench team'),
@@ -575,6 +583,8 @@ views.monitor = async (params) => {
       h('p', { class: 'muted xs', style: 'margin-top:1rem' }, 'Sizes come from the file records. The billed storage figure is in the Supabase dashboard under Usage.'));
   }
 };
+
+if (canQuote) Q = registerQuotes(views, { ui, me, isAdmin, q, all, route: () => route(), staff });
 
 /* ---------- router ---------- */
 async function route() {

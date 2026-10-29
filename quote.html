@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<meta name="build" content="__BUILD__" />
+<script type="module" src="/js/update.js"></script>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/app.css" />
+<title>Quote — Stratabench</title>
+<style>
+  body { background: #e9edf2; }
+  .qbar { position: sticky; top: 0; z-index: 5; display: flex; gap: .5rem; align-items: center; justify-content: space-between; padding: .6rem max(1rem, env(safe-area-inset-left)); background: #0d1520; color: #eaf1f8; }
+  .qbar .btn { background: #4aa3e3; color: #06121f; border: 0; }
+  .qbar a { color: #9aadc2; font-size: .9rem; }
+  .qpage { max-width: 8.5in; margin: 1.25rem auto 3rem; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.12); padding: .6in .65in; }
+  @media (max-width: 700px) { .qpage { margin: 0; padding: 1.1rem; box-shadow: none; } }
+  @media print { @page { size: letter; margin: .55in .6in; } body { background: #fff; } .qbar { display: none; } .qpage { margin: 0; padding: 0; box-shadow: none; max-width: none; } }
+</style>
+</head>
+<body>
+<div class="qbar"><a href="javascript:history.length>1?history.back():location.replace('/login.html')">← Back</a><span class="small" id="qlabel"></span><button class="btn sm" type="button" onclick="window.print()">Save PDF / Print</button></div>
+<main class="qpage" id="doc"><p class="muted">Loading quote…</p></main>
+<script type="module">
+import { sb } from './js/core.js';
+import { quoteDocument } from './js/quote-doc.js';
+import { customerSnapshot } from './js/quote-calc.js';
+const P = new URLSearchParams(location.search);
+const out = document.getElementById('doc');
+const fail = (m) => { out.innerHTML = ''; const p = document.createElement('p'); p.textContent = m; out.append(p); };
+const { data: { session } } = await sb.auth.getSession();
+if (!session) location.replace('/login.html');
+try {
+  let snap, status;
+  if (P.get('pq')) {
+    const { data, error } = await sb.from('published_quotes').select('*').eq('id', P.get('pq')).single();
+    if (error || !data) throw new Error('Quote not found, or you do not have access to it.');
+    snap = data.snapshot; status = data.status;
+  } else if (P.get('q')) {
+    const id = P.get('q');
+    const [{ data: quote, error }, { data: lines }, { data: rates }, { data: settings }] = await Promise.all([sb.from('quotes').select('*').eq('id', id).single(), sb.from('quote_lines').select('*').eq('quote_id', id).order('sort'), sb.from('labor_rates').select('*'), sb.from('quote_settings').select('*').eq('id', 1).single()]);
+    if (error || !quote) throw new Error('Quote not found, or you do not have quote access.');
+    const [{ data: company }, { data: contact }, { data: prep }] = await Promise.all([sb.from('companies').select('*').eq('id', quote.company_id).single(), quote.contact_id ? sb.from('contacts').select('*').eq('id', quote.contact_id).single() : Promise.resolve({ data: null }), sb.from('profiles').select('full_name,email,title').eq('id', quote.created_by).single()]);
+    snap = customerSnapshot({ quote, lines: lines || [], rates: Object.fromEntries((rates || []).map((r) => [r.id, r])), settings, company, contact, preparer: prep });
+    status = quote.status === 'draft' ? 'draft' : quote.status;
+  } else throw new Error('No quote selected.');
+  document.title = `${snap.number} Rev ${snap.revision} — ${snap.title}`;
+  document.getElementById('qlabel').textContent = `${snap.number} · Rev ${snap.revision}`;
+  out.replaceChildren(quoteDocument(snap, { status }));
+} catch (e) { fail(e.message || String(e)); }
+</script>
+</body>
+</html>
